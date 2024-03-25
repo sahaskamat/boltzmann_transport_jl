@@ -48,7 +48,6 @@ function createinitialpoints(c,E,n,doublefermisurface)
     #diagnostics, this plots a x-z plane projection of calculated initial points
     for points_along_phi in vector_of_r0s
         matrix_of_points = hcat(points_along_phi...)
-        print(matrix_of_points[1,:])
         plot!(matrix_of_points[1,:],matrix_of_points[2,:],matrix_of_points[3,:])
     end
     savefig("last_initial_points_list.png")
