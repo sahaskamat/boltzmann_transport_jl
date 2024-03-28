@@ -1,18 +1,17 @@
 using Symbolics
 using LinearAlgebra
+using Plots
 
 include("dispersion.jl")
 include("createorbits.jl")
 
 disp = make_NdLSCO_dispersion(160f-3,-0.1364,0.0682,0.0651,0.8243)
-createinitialpoints(disp["c"],disp["E"],100,true)
+initialpoints = createinitialpoints(disp["c"],disp["E"],10,true)
+dense_initialpoints = interpolate3d(initialpoints,10)
 
-#plot disp["E"] as a diagnostic
-#function energyAlongPhi(r0)
-#    return disp["E"]([r0,0,0])
-#end
-
-#r_range = LinRange(0,5,1000)
-#E_range = broadcast(energyAlongPhi,r_range)
-#plot(r_range,E_range)
-#savefig("myplot.png")
+#diagnostics, this plots a x-z plane projection of calculated initial points
+for points_along_phi in dense_initialpoints
+    matrix_of_points = hcat(points_along_phi...)
+    plot!(matrix_of_points[1,:],matrix_of_points[2,:],matrix_of_points[3,:])
+end
+savefig("last_initial_points_list.png")
