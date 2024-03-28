@@ -1,5 +1,5 @@
 using NonlinearSolve
-using Plots
+using DataInterpolations
 
 """
     createinitialpoints(c::Float64,E::function,n::Int64,doublefermisurface::Bool)
@@ -15,15 +15,15 @@ function createinitialpoints(c,E,n,doublefermisurface)
         c_eff = c
     end 
 
-    starting_z_coords = LinRange(-pi/c_eff,pi/c_eff,n+1) #create zcoordinates, each defining a plane on which points used for interpolation will be found. Exclude endpoint so that zone can be multiplied easily
-    #pop!(starting_z_coords) #this deletes the last element of starting_z_coords, since it is the same as the first upto a reciprocal lattice vector. now starting_z_coords has exactly n elements
+    starting_z_coords = collect(LinRange(-pi/c_eff,pi/c_eff,n+1)) #create zcoordinates, each defining a plane on which points used for interpolation will be found. Exclude endpoint so that zone can be multiplied easily
+    pop!(starting_z_coords) #this deletes the last element of starting_z_coords, since it is the same as the first upto a reciprocal lattice vector. now starting_z_coords has exactly n elements
 
     philist = [0,pi] #list of phis along which to create the points. n points are created along each curve defined by phi and lying along the fermi surface
 
     vector_of_r0s = [] #empty vector, ith element of this vector corresponds to the list of 3-d points lying on philist[i]
 
     for phi in philist
-        r0_list = [] #for each z_coord and phi, one element [x,y,z] will be found
+        r0_list = Vector{Float64}[] #for each z_coord and phi, one element [x,y,z] will be found
 
         #a function that returns the energy at (r=r0,phi=phi,z=z0) in cylindrical coordinates
         function energyAlongPhi(r0,z0)
@@ -44,15 +44,25 @@ function createinitialpoints(c,E,n,doublefermisurface)
         #once r0_list is made, append it to vector_of_r0s
         push!(vector_of_r0s,Array(r0_list))
     end 
-
-    #diagnostics, this plots a x-z plane projection of calculated initial points
-    for points_along_phi in vector_of_r0s
-        matrix_of_points = hcat(points_along_phi...)
-        plot!(matrix_of_points[1,:],matrix_of_points[2,:],matrix_of_points[3,:])
-    end
-    savefig("last_initial_points_list.png")
     
     #return [v1,v2,v3...] where each v_n is a vector 
     return vector_of_r0s
 end
 
+"""
+    interpolate3d(vector_of_r0s::vector of vector of 3-vectors,n::Int)
+
+returns a vector of vector of 3-vectors, but now interpolated with n times more points
+"""
+function interpolate3d(vector_of_r0s,n)
+
+    dense_vector_of_r0s=[] #same as vector_of_r0s, but with n times more points
+
+    for points_along_phi in vector_of_r0s
+        itp = CubicSpline(points_along_phi,collect(LinRange(0,1,length(points_along_phi)))) #interpolate all the points in points_along_phi, each parameterised by a number between 0 and 1
+        denser_points_along_phi = broadcast(itp,collect(LinRange(0,1,length(points_along_phi)*n))) #broadcasts the interpolating function across [0,1] but now n times as dense
+        push!(dense_vector_of_r0s,denser_points_along_phi)
+    end
+
+    return dense_vector_of_r0s
+end
