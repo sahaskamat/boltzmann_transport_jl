@@ -66,3 +66,34 @@ function interpolate3d(vector_of_r0s,n)
 
     return dense_vector_of_r0s
 end
+
+"""
+    extendedzonemultiply(vector_of_r0s::vector of vector of 3-vectors,n::Int,c::Float64,doublefermisurface::Bool)
+
+returns a vector of vector of 3-vectors, now replicated 2n+1 times along the c axis direction, n below and n above (extended zone scheme)
+this should ideally be replaced by an algorithm that respects the periodic nature of the fermi surface better in the future
+"""
+function extendedzonemultiply(vector_of_r0s,n,c,doublefermisurface)
+    #makes c = c/2 if doublefermisurface is true
+    if doublefermisurface
+        c_eff = c/2
+    else
+        c_eff = c
+    end 
+
+    extended_vector_of_r0s=[] #same as vector_of_r0s, but with extended n times in either c axis direction
+
+    for points_along_phi in vector_of_r0s
+        extended_points_along_phi=points_along_phi
+
+        for i = 1:n
+            points_before = points_along_phi .- [[0,0,(2*pi*i)/c_eff]]
+            points_after = points_along_phi .+ [[0,0,(2*pi*i)/c_eff]]
+            extended_points_along_phi = [points_before;extended_points_along_phi;points_after]
+        end
+
+        push!(extended_vector_of_r0s,extended_points_along_phi)
+    end 
+
+    return extended_vector_of_r0s
+end
