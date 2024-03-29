@@ -50,21 +50,21 @@ function createinitialpoints(c,E,n,doublefermisurface)
 end
 
 """
-    interpolate3d(vector_of_r0s::vector of vector of 3-vectors,n::Int)
+    interpolate3d(vector_of_r0s::vector of vector of 3-vectors)
 
-returns a vector of vector of 3-vectors, but now interpolated with n times more points
+returns a vector of vector functions that returns the [x,y,z] point for a z input
 """
-function interpolate3d(vector_of_r0s,n)
+function interpolate3d(vector_of_r0s)
 
-    dense_vector_of_r0s=[] #same as vector_of_r0s, but with n times more points
+    vector_of_interpolated_curves=[] #ith element of this vector is an interpolating function giving [x,y,z] along phi_i for an input z
 
     for points_along_phi in vector_of_r0s
-        itp = CubicSpline(points_along_phi,collect(LinRange(0,1,length(points_along_phi)))) #interpolate all the points in points_along_phi, each parameterised by a number between 0 and 1
-        denser_points_along_phi = broadcast(itp,collect(LinRange(0,1,length(points_along_phi)*n))) #broadcasts the interpolating function across [0,1] but now n times as dense
-        push!(dense_vector_of_r0s,denser_points_along_phi)
+        z_points = hcat(points_along_phi...)[3,:] #vector of z coordinates corresponding to each point in points_along_phi
+        itp = CubicSpline(points_along_phi,z_points) #interpolate all the points in points_along_phi, each parameterised by its z coordinate
+        push!(vector_of_interpolated_curves,itp)
     end
 
-    return dense_vector_of_r0s
+    return vector_of_interpolated_curves
 end
 
 """
