@@ -1,11 +1,18 @@
 using Symbolics
 using LinearAlgebra
 
-function make_NdLSCO_dispersion(T,T1multvalue,T11multvalue,Tzmultvalue,mumultvalue)
+function make_NdLSCO_dispersion(T,T1multvalue,T11multvalue,Tzmultvalue,mumultvalue,doublefermisurface)
     #These are known lattice parameters that will not be fit
     a=3.75 #angstroms
     b=a #angstroms
     c=2*6.6 #angstroms
+
+    #makes c = c/2 if doublefermisurface is true
+    if doublefermisurface
+        c_eff = c/2
+    else
+        c_eff = c
+    end 
 
     #Unknown tight binding parameters that may have to be fit
     T1 = T1multvalue*T
@@ -65,6 +72,7 @@ function make_NdLSCO_dispersion(T,T1multvalue,T11multvalue,Tzmultvalue,mumultval
         "a" => a,
         "b" => b,
         "c" => c,
+        "c_eff" => c_eff,
         "T1" => T1,
         "T11" => T11,
         "Tz" => Tz,
