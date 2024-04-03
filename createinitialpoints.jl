@@ -1,5 +1,6 @@
 using NonlinearSolve
 using DataInterpolations
+using LinearAlgebra
 
 """
     createinitialpoints(c::Float64,E::function,n::Int64,doublefermisurface::Bool)
@@ -86,3 +87,34 @@ function extendedzonemultiply(vector_of_r0s,n,c_eff)
     return extended_vector_of_r0s
 end
 
+"""
+    makeorbitpoints(extended_vector_of_r0s::vector of vector of 3-vectors,interpolatedcurves::vector of interpolating functions,B::3-vector,n::Int,c_eff::Float64)
+
+returns a n-length vector. Each element contains the points that lie on the ith orbital plane, which can now be used as an initial point to solve the orbtial differential equation.
+"""
+function makeorbitpoints(extended_vector_of_r0s,interpolatedcurves,B,n,c_eff)
+    B_normalized = B/norm(B)
+
+    vector_of_points_on_plane= [[0,0,z] for z in LinRange(-pi/c_eff,pi/c_eff,n)]
+
+    planeequation(r,normalvector,pointonplane) = dot(r,normalvector) - dot(pointonplane,normalvector) #planeequation = 0 is the equation of the plane passing through pointonplane and perpendicular to normalvector
+
+    vector_of_intersectionpoints = [] #each element of this vector contains intersectionpoints of the curves in interpolatedcurves and the ith point in vector_of_points_on_plane
+
+    for pointonplane in vector_of_points_on_plane
+        intersectionpoints = [] #vector of points that lie on the plane of pointonplane and intersect with interpolatedcurves
+        for discrete_curve in extended_vector_of_r0s
+            value_of_planeequation = broadcast(planeequation,discrete_curve,[B_normalized],[pointonplane]) #value of planeequation(x,B,pointonplane) for each x in discrete_curve
+            twos_where_intersections = diff(broadcast(sign,value_of_planeequation)) #this looks like [0,0,0,2,0,0,1,1,0,0,0] where the 2 corresponds to the plane passing between two points in discrete_curve and the 1,1 is where the plane exactly hits a point in discrete_curve
+            intersection_indices = findall(!iszero,twos_where_intersections) #this counts all points where the plane passes between points in discrete_curve and double counts points at which the plane hits discrete_curve
+
+            for index in intersection_indices
+                intersection_point = (discrete_curve[index] .+ discrete_curve[index+1])/2
+                push!(intersectionpoints,intersection_point)
+            end
+        end
+        push!(vector_of_intersectionpoints,intersectionpoints)
+    end
+
+    return vector_of_intersectionpoints
+end
