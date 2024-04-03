@@ -3,12 +3,15 @@ using LinearAlgebra
 using Plots
 
 include("dispersion.jl")
-include("createorbits.jl")
+include("createinitialpoints.jl")
+
+B=[45*sin(pi/4),0,45*cos(pi/4)]  #a field of 45T along the z axis
 
 disp = make_NdLSCO_dispersion(160f-3,-0.1364,0.0682,0.0651,0.8243,true)
-initialpoints = createinitialpoints(disp["c_eff"],disp["E"],90)
+initialpoints = createinitialpoints(disp["c_eff"],disp["E"],50)
 extended_intialpoints = extendedzonemultiply(initialpoints,2,disp["c_eff"])
 interpolatedcurves = interpolate3d(initialpoints,disp["c_eff"])
+intersectionpoints = makeorbitpoints(extended_intialpoints,interpolatedcurves,B,5,disp["c_eff"])
 
 #diagnostics, this plots a x-z plane projection of calculated initial points
 plot([0],[0],[0])
@@ -25,4 +28,11 @@ for curve_along_phi in interpolatedcurves
     matrix_of_points = hcat(broadcast(curve_along_phi,z_coords)...)
     plot!(matrix_of_points[1,:],matrix_of_points[2,:],matrix_of_points[3,:])
 end
+
+#diagnostics to make sure intersectionpoints are correct
+for set_of_intersections_with_a_plane in intersectionpoints
+    matrix_of_points = hcat(set_of_intersections_with_a_plane...)
+    scatter!(matrix_of_points[1,:],matrix_of_points[2,:],matrix_of_points[3,:])
+end
+
 savefig("interpolatedpoints.png")
