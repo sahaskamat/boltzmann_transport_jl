@@ -106,12 +106,22 @@ function makeorbitpoints(extended_vector_of_r0s,interpolatedcurves,B,n,c_eff)
         for discrete_curve in extended_vector_of_r0s
             value_of_planeequation = broadcast(planeequation,discrete_curve,[B_normalized],[pointonplane]) #value of planeequation(x,B,pointonplane) for each x in discrete_curve
             twos_where_intersections = diff(broadcast(sign,value_of_planeequation)) #this looks like [0,0,0,2,0,0,1,1,0,0,0] where the 2 corresponds to the plane passing between two points in discrete_curve and the 1,1 is where the plane exactly hits a point in discrete_curve
-            intersection_indices = findall(!iszero,twos_where_intersections) #this counts all points where the plane passes between points in discrete_curve and double counts points at which the plane hits discrete_curve
+            crossing_indices = findall(x -> (abs(x)==2),twos_where_intersections) #this counts all points where the plane passes between points in discrete_curve 
+            hitting_indices = findall(x -> (abs(x)==1),twos_where_intersections) #this counts all points where the plane hits points in discrete_curve 
 
-            for index in intersection_indices
+            for index in crossing_indices
                 intersection_point = (discrete_curve[index] .+ discrete_curve[index+1])/2
                 push!(intersectionpoints,intersection_point)
             end
+
+            for id in eachindex(hitting_indices)
+                if isodd(id)
+                    index = hitting_indices[id]
+                    intersection_point = discrete_curve[index+1]
+                    push!(intersectionpoints,intersection_point)
+                end
+            end
+
         end
         push!(vector_of_intersectionpoints,intersectionpoints)
     end
