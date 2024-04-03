@@ -11,7 +11,7 @@ function createinitialpoints(c_eff,E,n)
 
     starting_z_coords = collect(LinRange(-pi/c_eff,pi/c_eff,n)) #create zcoordinates, each defining a plane on which points used for interpolation will be found. Exclude endpoint so that zone can be multiplied easily
 
-    philist = [0,pi] #list of phis along which to create the points. n points are created along each curve defined by phi and lying along the fermi surface
+    philist = [0,pi] #list of phis along which to create the point s. n points are created along each curve defined by phi and lying along the fermi surface
 
     vector_of_r0s = [] #empty vector, ith element of this vector corresponds to the list of 3-d points lying on philist[i]
 
@@ -103,18 +103,21 @@ function makeorbitpoints(extended_vector_of_r0s,interpolatedcurves,B,n,c_eff)
 
     for pointonplane in vector_of_points_on_plane
         intersectionpoints = [] #vector of points that lie on the plane of pointonplane and intersect with interpolatedcurves
-        for discrete_curve in extended_vector_of_r0s
+        for (id,discrete_curve) in enumerate(extended_vector_of_r0s)
             value_of_planeequation = broadcast(planeequation,discrete_curve,[B_normalized],[pointonplane]) #value of planeequation(x,B,pointonplane) for each x in discrete_curve
             twos_where_intersections = diff(broadcast(sign,value_of_planeequation)) #this looks like [0,0,0,2,0,0,1,1,0,0,0] where the 2 corresponds to the plane passing between two points in discrete_curve and the 1,1 is where the plane exactly hits a point in discrete_curve
             crossing_indices = findall(x -> (abs(x)==2),twos_where_intersections) #this counts all points where the plane passes between points in discrete_curve 
             hitting_indices = findall(x -> (abs(x)==1),twos_where_intersections) #this counts all points where the plane hits points in discrete_curve 
 
-            for index in crossing_indices
-                intersection_point = (discrete_curve[index] .+ discrete_curve[index+1])/2
+            for index in crossing_indices #use a binary search to find where planeequation goes to zero
+                lowerbound = discrete_curve[index]
+                upperbound = discrete_curve[index+1]
+
+                intersection_point = binaryfindintersection(lowerbound,upperbound,planeequation,B,pointonplane,interpolatedcurves[id])
                 push!(intersectionpoints,intersection_point)
             end
 
-            for id in eachindex(hitting_indices)
+            for id in eachindex(hitting_indices) #this adds every even indexed element in hitting_indices to intersectionpoints
                 if isodd(id)
                     index = hitting_indices[id]
                     intersection_point = discrete_curve[index+1]
@@ -127,4 +130,26 @@ function makeorbitpoints(extended_vector_of_r0s,interpolatedcurves,B,n,c_eff)
     end
 
     return vector_of_intersectionpoints
+end
+
+"""
+    binaryfindintersection(lowerbound::3-vector,upperbound::3-vector,planeequation::function,B::3-vector,pointonplane::3-vector,interpolatingcurve::function)
+
+returns the 3-vector x where planeequation(x,B,pointonplane) = 0 on the interpolatingcurve connecting lowerbound and upperbound
+"""
+function binaryfindintersection(lowerbound,upperbound,planeequation,B,pointonplane,interpolatingcurve)
+
+    z_middle  = (lowerbound[3] + upperbound[3])/2
+    middlepoint = interpolatingcurve(z_middle)
+
+    for i in 1:10
+        if planeequation(lowerbound,B,pointonplane)*planeequation(middlepoint,B,pointonplane)<0 upperbound=middlepoint
+        elseif planeequation(upperbound,B,pointonplane)*planeequation(middlepoint,B,pointonplane)<0 lowerbound=middlepoint
+        end
+
+        z_middle  = (lowerbound[3] + upperbound[3])/2
+        middlepoint = interpolatingcurve(z_middle)
+    end
+    
+    return middlepoint
 end
