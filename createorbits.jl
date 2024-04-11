@@ -24,7 +24,13 @@ function createorbits(intersectionpoints,B,gradE)
             timespan = (0,8)
             prob = ODEProblem(rhs!,k0,timespan)
 
-            sol = solve(prob)
+            #implement termination condition upon orbit completion
+            abstol_termination = 0.01
+            condition(u,t,integrator) = (norm(u - k0) < abstol_termination) && (t>1) #second condition is to make sure condition only triggers on orbit closing
+            affect!(integrator) = terminate!(integrator)
+            cb = DiscreteCallback(condition, affect!)
+
+            sol = solve(prob,callback=cb)
             push!(orbits_in_plane,sol.u)
         end
 
