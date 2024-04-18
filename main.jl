@@ -14,7 +14,9 @@ initialpoints = createinitialpoints(disp["c_eff"],disp["E"],50)
 extended_intialpoints = extendedzonemultiply(initialpoints,2,disp["c_eff"])
 interpolatedcurves = interpolate3d(initialpoints,disp["c_eff"])
 intersectionpoints = makeorbitpoints(extended_intialpoints,interpolatedcurves,B,5,disp["c_eff"])
-orbits = createorbits(intersectionpoints,B,disp["gradE"])
+intersectionpoints_temp = deepcopy(intersectionpoints) #this is because createorbits mutates intersectionpoints
+orbits = createorbits!(intersectionpoints_temp,B,disp["gradE"])
+new_orbits = orbitCleanUp(orbits,0.1)
 
 #diagnostics, this plots a x-z plane projection of calculated initial points
 plot([0],[0],[0])
@@ -43,6 +45,14 @@ for orbits_in_plane in orbits
     for curve in orbits_in_plane
         matrix_of_points = hcat(curve...)
         plot!(matrix_of_points[1,:],matrix_of_points[2,:],matrix_of_points[3,:])
+    end
+end
+
+#diagnostics to make sure equally spaced orbits are being made correctlyfor orbits_in_plane in orbits
+for orbits_in_plane in new_orbits
+    for curve in orbits_in_plane
+        matrix_of_points = hcat(curve...)
+        scatter!(matrix_of_points[1,:],matrix_of_points[2,:],matrix_of_points[3,:])
     end
 end
 savefig("interpolatedpoints.png")
