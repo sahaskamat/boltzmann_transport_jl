@@ -32,7 +32,7 @@ function createorbits!(intersectionpoints,B,gradE)
             affect!(integrator) = terminate!(integrator)
             cb = DiscreteCallback(condition, affect!)
 
-            sol = solve(prob,callback=cb,saveat=abstol_termination/10)   #solve for the orbit
+            sol = solve(prob,callback=cb,saveat=abstol_termination/1000)   #solve for the orbit
             push!(orbits_in_plane,sol.u)
 
             indices_to_be_deleted = [] #this deletes points from intersectionpoints_in_plane if they lie on the current orbit
