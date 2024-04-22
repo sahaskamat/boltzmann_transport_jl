@@ -5,18 +5,20 @@ using Plots
 include("dispersion.jl")
 include("createinitialpoints.jl")
 include("createorbits.jl")
+include("conductivity.jl")
 
-B=[45*sin(pi/4),0,45*cos(pi/4)]  #a field of 45T along the z axis
+B=[45*sin(pi/4),0,45*cos(pi/4)]  #a field of 45T at 45 deg to Z axis
 
 
 disp = make_NdLSCO_dispersion(160f-3,-0.1364,0.0682,0.0651,0.8243,true)
 initialpoints = createinitialpoints(disp["c_eff"],disp["E"],50)
 extended_intialpoints = extendedzonemultiply(initialpoints,2,disp["c_eff"])
 interpolatedcurves = interpolate3d(initialpoints,disp["c_eff"])
-intersectionpoints = makeorbitpoints(extended_intialpoints,interpolatedcurves,B,5,disp["c_eff"])
+intersectionpoints,dkz = makeorbitpoints(extended_intialpoints,interpolatedcurves,B,5,disp["c_eff"])
 intersectionpoints_temp = deepcopy(intersectionpoints) #this is because createorbits mutates intersectionpoints
 orbits = createorbits!(intersectionpoints_temp,B,disp["gradE"])
 new_orbits = orbitCleanUp(orbits,0.1)
+sigma,area = createSigma(new_orbits,disp["invtau"],disp["gradE"],B,dkz)
 
 #diagnostics, this plots a x-z plane projection of calculated initial points
 plot([0],[0],[0])
