@@ -90,7 +90,9 @@ end
 """
     makeorbitpoints(extended_vector_of_r0s::vector of vector of 3-vectors,interpolatedcurves::vector of interpolating functions,B::3-vector,n::Int,c_eff::Float64)
 
-returns a n-length vector. Each element contains the points that lie on the ith orbital plane, which can now be used as an initial point to solve the orbtial differential equation.
+returns vector_of_intersectionpoints,dkz
+vector_of_intersectionpoints: a n-length vector. Each element contains the points that lie on the ith orbital plane, which can now be used as an initial point to solve the orbtial differential equation.
+dkz: vector connecting a given plane to the plane above it
 """
 function makeorbitpoints(extended_vector_of_r0s,interpolatedcurves,B,n,c_eff)
     B_normalized = B/norm(B)
@@ -129,7 +131,8 @@ function makeorbitpoints(extended_vector_of_r0s,interpolatedcurves,B,n,c_eff)
         push!(vector_of_intersectionpoints,intersectionpoints)
     end
 
-    return vector_of_intersectionpoints
+    dkz = vector_of_points_on_plane[2] - vector_of_points_on_plane[1]
+    return vector_of_intersectionpoints,dkz
 end
 
 """
