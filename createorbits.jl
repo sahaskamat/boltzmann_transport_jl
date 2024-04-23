@@ -1,14 +1,15 @@
 using LinearAlgebra
 using DifferentialEquations
+using LSODA
 
 """
-    createorbits(intersectionpoints::vector of vector of 3-vectors,B::3-vector,gradE::function)
+    createorbits(intersectionpoints::vector of vector of 3-vectors,B::3-vector,gradE::function,mult_factor::Num)
 
     returns: orbits(vector of vector of vector of 3-vectors, with each vector of 3-vectors corresponding to  ONE orbit in a plane)
     i.e. orbits[i][j] is a vector of points lying along one orbit
          orbits[i] is a vector of vectors, with each vector containing curves lying on a single plane
 """
-function createorbits!(intersectionpoints,B,gradE)
+function createorbits!(intersectionpoints,B,gradE,mult_factor)
     orbits = []
     B_normalized = B/norm(B)
 
@@ -19,21 +20,22 @@ function createorbits!(intersectionpoints,B,gradE)
             point = pop!(intersectionpoints_in_plane)
 
             function rhs!(dk,k,p,t) #dk/dk, defined in a way to mutate input dk (supposed to be faster)
-                dk .= cross(gradE(k),B_normalized) #dk/dt = v x B
+                dk .= cross(gradE(k),B_normalized*mult_factor) #dk/dt = v x B
             end
 
             k0 = point #initial condition
-            timespan = (0,20)
+            timespan = (0,4)
             prob = ODEProblem(rhs!,k0,timespan)
 
             #implement termination condition upon orbit completion
-            abstol_termination = 0.1
+            abstol_termination = 0.05
             condition(u,t,integrator) = (norm(u - k0) < abstol_termination) && (dot(u-k0,cross(gradE(u),B_normalized))<0) #second condition is to make sure condition only triggers on orbit closing
             affect!(integrator) = terminate!(integrator)
             cb = DiscreteCallback(condition, affect!)
 
-            sol = solve(prob,callback=cb,saveat=abstol_termination/1000)   #solve for the orbit
+            sol = solve(prob,callback=cb,saveat=timespan[end]/10000,abstol=1e-8,reltol=1e-7,alg=AutoVern7(Rodas5()))   #solve for the orbit
             push!(orbits_in_plane,sol.u)
+            println("Time of orbit closing ",sol.t[end])
 
             indices_to_be_deleted = [] #this deletes points from intersectionpoints_in_plane if they lie on the current orbit
             for (index,initialpoint) in enumerate(intersectionpoints_in_plane)
