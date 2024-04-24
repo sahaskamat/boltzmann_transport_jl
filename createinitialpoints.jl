@@ -97,7 +97,8 @@ dkz: vector connecting a given plane to the plane above it
 function makeorbitpoints(extended_vector_of_r0s,interpolatedcurves,B,n,c_eff)
     B_normalized = B/norm(B)
 
-    vector_of_points_on_plane= [[0,0,z] for z in LinRange(-pi/c_eff,pi/c_eff,n)]
+    vector_of_points_on_plane= [[0,0,z] for z in LinRange(-pi/c_eff,pi/c_eff,n+1)]
+    pop!(vector_of_points_on_plane)
 
     planeequation(r,normalvector,pointonplane) = dot(r,normalvector) - dot(pointonplane,normalvector) #planeequation = 0 is the equation of the plane passing through pointonplane and perpendicular to normalvector
 
