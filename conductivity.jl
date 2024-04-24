@@ -94,6 +94,8 @@ function createAmatrix(orbits,invtau,dedk,B)
 
                 i+=1
             end
+
+            submatrixindex+= m
         end
     end
 
@@ -135,6 +137,7 @@ function solveAlphaSparse(orbits,invtau,dedk,dedk_list,B)
     alpha = zero(dedk_list) #dedk_list/A
     ldiv!(alpha,factorize(A_sparse),dedk_list)
 
+    println(size(A_sparse))
     return alpha
 end
 
