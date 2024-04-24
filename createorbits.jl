@@ -28,14 +28,14 @@ function createorbits!(intersectionpoints,B,gradE,mult_factor)
             prob = ODEProblem(rhs!,k0,timespan)
 
             #implement termination condition upon orbit completion
-            abstol_termination = 0.05
+            abstol_termination = 0.02
             condition(u,t,integrator) = (norm(u - k0) < abstol_termination) && (dot(u-k0,cross(gradE(u),B_normalized))<0) #second condition is to make sure condition only triggers on orbit closing
             affect!(integrator) = terminate!(integrator)
             cb = DiscreteCallback(condition, affect!)
 
-            sol = solve(prob,callback=cb,saveat=timespan[end]/10000,abstol=1e-8,reltol=1e-7,alg=AutoVern7(Rodas5()))   #solve for the orbit
+            sol = solve(prob,callback=cb,saveat=timespan[end]/10000,abstol=1e-10,reltol=1e-9,alg=AutoVern7(Rodas5()))   #solve for the orbit
             push!(orbits_in_plane,sol.u)
-            println("Time of orbit closing ",sol.t[end])
+            if sol.t[end] == timespan[end] error("Some orbits did not terminate! Increase termination tolerance or decrease integration tolerance") end
 
             indices_to_be_deleted = [] #this deletes points from intersectionpoints_in_plane if they lie on the current orbit
             for (index,initialpoint) in enumerate(intersectionpoints_in_plane)
@@ -91,7 +91,7 @@ function orbitCleanUp(orbits,spacing)
                 end
             end
 
-            push!(new_orbits_in_plane,new_orbit)
+            if length(new_orbit)>2 push!(new_orbits_in_plane,new_orbit) end
         end
 
         push!(new_orbits,new_orbits_in_plane)
