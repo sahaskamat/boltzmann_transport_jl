@@ -3,13 +3,13 @@ using DifferentialEquations
 using LSODA
 
 """
-    createorbits(intersectionpoints::vector of vector of 3-vectors,B::3-vector,gradE::function,mult_factor::Num)
+    createorbits(intersectionpoints::vector of vector of 3-vectors,B::3-vector,gradE::function,mult_factor::Num,endtime::Num,num_integratedpoints::Int64,abstol::Num,reltol::Num,abstol_termination::Num)
 
     returns: orbits(vector of vector of vector of 3-vectors, with each vector of 3-vectors corresponding to  ONE orbit in a plane)
     i.e. orbits[i][j] is a vector of points lying along one orbit
          orbits[i] is a vector of vectors, with each vector containing curves lying on a single plane
 """
-function createorbits!(intersectionpoints,B,gradE,mult_factor)
+function createorbits!(intersectionpoints,B,gradE,mult_factor,endtime,num_integratedpoints,abstol,reltol,abstol_termination)
     orbits = []
     B_normalized = B/norm(B)
 
@@ -24,16 +24,18 @@ function createorbits!(intersectionpoints,B,gradE,mult_factor)
             end
 
             k0 = point #initial condition
-            timespan = (0,4)
+            timespan = (0,endtime) #endtime is the time at which integration terminates if orbit did not close yet
             prob = ODEProblem(rhs!,k0,timespan)
 
             #implement termination condition upon orbit completion
-            abstol_termination = 0.02
+            #orbit "closes" when current point is within abstol_termination distance of starting point
             condition(u,t,integrator) = (norm(u - k0) < abstol_termination) && (dot(u-k0,cross(gradE(u),B_normalized))<0) #second condition is to make sure condition only triggers on orbit closing
             affect!(integrator) = terminate!(integrator)
             cb = DiscreteCallback(condition, affect!)
 
-            sol = solve(prob,callback=cb,saveat=timespan[end]/10000,abstol=1e-10,reltol=1e-9,alg=AutoVern7(Rodas5()))   #solve for the orbit
+            #num_integratedpoints is the maximum number of points that will be integrated if orbits don't close
+            #abstol and reltol are the absolute and relative tolerances of the integrator
+            sol = solve(prob,callback=cb,saveat=timespan[end]/num_integratedpoints,abstol=abstol,reltol=reltol,alg=AutoVern7(Rodas5()))   #solve for the orbit
             push!(orbits_in_plane,sol.u)
             if sol.t[end] == timespan[end] error("Some orbits did not terminate! Increase termination tolerance or decrease integration tolerance") end
 
