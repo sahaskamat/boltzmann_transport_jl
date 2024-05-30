@@ -16,7 +16,7 @@ extended_intialpoints = extendedzonemultiply(initialpoints,2,disp["c_eff"])
 interpolatedcurves = interpolate3d(initialpoints,disp["c_eff"])
 intersectionpoints,dkz = makeorbitpoints(extended_intialpoints,interpolatedcurves,B,5,disp["c_eff"])
 intersectionpoints_temp = deepcopy(intersectionpoints) #this is because createorbits mutates intersectionpoints
-orbits = createorbits!(intersectionpoints_temp,B,disp["gradE"])
+orbits = createorbits!(intersectionpoints_temp,B,disp["gradE"],15,4,10000,1e-10,1e-9,0.02)
 new_orbits = orbitCleanUp(orbits,0.1)
 sigma,area = createSigma(new_orbits,disp["invtau"],disp["gradE"],B,dkz)
 

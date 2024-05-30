@@ -24,7 +24,7 @@ for theta in LinRange(0,80,40)
 
     intersectionpoints,dkz = makeorbitpoints(extended_intialpoints,interpolatedcurves,B,300,disp["c_eff"])
     intersectionpoints_temp = deepcopy(intersectionpoints) #this is because createorbits mutates intersectionpoints
-    orbits = createorbits!(intersectionpoints_temp,B,disp["gradE"],15)
+    orbits = createorbits!(intersectionpoints_temp,B,disp["gradE"],15,4,10000,1e-10,1e-9,0.02)
     new_orbits = orbitCleanUp(orbits,0.01)
     sigma,area = createSigma(new_orbits,disp["invtau"],disp["gradE"],B,dkz)
 
