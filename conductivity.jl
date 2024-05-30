@@ -4,6 +4,7 @@ using SparseArrays
 
 """
     createSigma(orbits::vector of vector of vector of 3-vectors,invtau::function,dedk::function,B::3-vector,dkz::3-vector)
+    sigma is returned in units of 10^9 S/m (SI units of conductivity), totalarea is returned in units of Angstrom^-2
 
 returns: sigma::(3x3 matrix), totalarea::Float64
 """
@@ -30,7 +31,7 @@ function createSigma(orbits,invtau,dedk,B,dkz)
     for mu in 1:3
         for nu in 1:3
             #create the (mu,nu) element of sigma
-            sigma[mu,nu] = (3.699/(4*pi^3))*sum(patcharealist .* unitvec_dedk_list[:,nu] .* alpha[:,mu]) #e^2/4pi^3hbar^2 int(dk3 unitvec_dedk_list^b alpha^a) 
+            sigma[mu,nu] = (3.699/(4*pi^3))*sum(patcharealist .* unitvec_dedk_list[:,nu] .* alpha[:,mu]) #e^2/4pi^3hbar^2 int(dk3 unitvec_dedk_list^b alpha^a), this is in units of 10^9 S/m (SI units)
         end
     end
 
