@@ -1,6 +1,6 @@
 using LinearAlgebra
 using SparseArrays
-
+using IterativeSolvers
 
 """
     createSigma(orbits::vector of vector of vector of 3-vectors,invtau::function,dedk::function,B::3-vector,dkz::3-vector)
@@ -132,13 +132,34 @@ solver that returns dedk_list/A using relaxation time approximation and exploiti
 returns: alpha = dedk_list/A
 """
 function solveAlphaSparse(orbits,invtau,dedk,dedk_list,B)
+    #create A matrix under the relaxation time approximation
     Adata,Aposition_i,Aposition_j,n = createAmatrix(orbits,invtau,dedk,B)
-    A_sparse = sparse(Aposition_i,Aposition_j,Adata,n,n,+)
+    A_reltime = sparse(Aposition_i,Aposition_j,Adata,n,n,+)
     
-    alpha = zero(dedk_list) #dedk_list/A
-    ldiv!(alpha,factorize(A_sparse),dedk_list)
+    """
+        A_times_x(A_reltime::sparse matrix,C_in(k,k')::bilinear function,x::vector,orbitlist::x[i] corresponds to the momentum orbitlist[i])
+    """
+    function A_times_x(x)
+        #returns Y in AX=Y
 
-    println(size(A_sparse))
+        #first find A_reltime*x
+        y=A_reltime*x
+
+        """
+        for (i,momentum_i) in enumerate(orbitlist) #i iterates over y, the output vector and row of multiplication matrix
+            for (j,momentum_j) in enumerate(orbitlist) #j iterates over columns of multiplication matrix, and input vector x
+                y[i] -= C_in(momentum_i,momentum_j)*x[j]
+            end
+        end
+        """
+
+        return y
+    end
+
+    alpha = zero(dedk_list) #dedk_list/A
+    bicgstabl!(alpha,A_times_x,dedk_list,2) #solve A_sparse*alpha = dedk_list
+
+    println("Size of A matrix: ",size(A_reltime))
     return alpha
 end
 
