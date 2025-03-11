@@ -1,7 +1,12 @@
 using Symbolics
 using LinearAlgebra
 
-function make_NdLSCO_dispersion(T,T1multvalue,T11multvalue,Tzmultvalue,mumultvalue,doublefermisurface)
+function make_NdLSCO_dispersion(T,T1multvalue,T11multvalue,Tzmultvalue,mumultvalue,doublefermisurface,invtau_aniso = 63.823,invtau_iso  = 12.595)
+    """
+        make_NdLSCO_dispersion(T (eV),T1multvalue,T11multvalue,Tzmultvalue,mumultvalue,doublefermisurface (bool),invtau_aniso = 63.823 (ps-1),invtau_iso  = 12.595 (ps-1))
+
+    takes fermi surface and scattering parameters as inputs and creates a dictionary with functions used to calculate conductivity
+    """
     #These are known lattice parameters that will not be fit
     a=3.75 #angstroms
     b=a #angstroms
@@ -42,8 +47,8 @@ function make_NdLSCO_dispersion(T,T1multvalue,T11multvalue,Tzmultvalue,mumultval
     units of tau are ps, invtau are ps-1
     """
     function invtau(k)
-        invtau_iso  = 12.595 #ps-1
-        invtau_aniso = 63.823 #ps-1
+        #invtau_iso  = 12.595 #ps-1 #depreciated, invtau_iso is now taken as an input to make_NdLSCO_dispersion
+        #invtau_aniso = 63.823 #ps-1 #depreciated, invtau_aniso is now taken as an input to make_NdLSCO_dispersion
         nu=12
 
         angledependence=abs((k[1]^2 - k[2]^2)/(k[1]^2 + k[2]^2))^nu
